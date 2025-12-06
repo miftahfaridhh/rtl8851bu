@@ -4,7 +4,7 @@ Linux driver for Realtek RTL8851BU/RTL8831BU WiFi chipset (USB).
 
 ## Supported Devices
 
-- ipTIME AX900UA
+- ipTIME AX900UA and ipTIME AX900 (but disabling the bluetooth function)
 - Realtek RTL8851BU/RTL8831BU based adapters
 - **USB ID `3625:010b`** (Third-party adapter - newly added)
 
@@ -93,7 +93,7 @@ sudo insmod 8851bu.ko
 
 - Original driver by Realtek
 - Original repository modifications by ipTIME
-- ARM64/Jetson support and USB ID additions by [Your Name]
+- ARM64/Jetson support and USB ID additions by [github.com/miftahfaridhh]
 
 ## License
 
