@@ -4,9 +4,11 @@ Linux driver for Realtek RTL8851BU/RTL8831BU WiFi chipset (USB).
 
 ## Supported Devices
 
-- ipTIME AX900UA and ipTIME AX900 (but disabling the bluetooth function)
+- ipTIME AX900UA and ipTIME AX900
+- TP-Link TX10UB (USB ID `3625:010b`)
 - Realtek RTL8851BU/RTL8831BU based adapters
-- **USB ID `3625:010b`** (Third-party adapter - newly added)
+
+> **Note:** This driver provides **WiFi functionality only**. Bluetooth must be disabled for the WiFi driver to work properly. See [Disabling Bluetooth](#important-disabling-bluetooth-required) section below.
 
 ## Tested Environment
 
@@ -45,7 +47,7 @@ This fork includes the following modifications:
 ### Prerequisites
 ```bash
 sudo apt-get update
-sudo apt-get install build-essential linux-headers-$(uname -r)
+sudo apt-get install build-essential linux-headers-$(uname -r) usb-modeswitch
 ```
 
 ### Build & Install
@@ -59,6 +61,7 @@ make
 
 # Install the driver
 sudo make install
+sudo depmod -a
 
 # Load the driver
 sudo modprobe 8851bu
@@ -71,6 +74,72 @@ lsmod | grep 8851bu
 
 # Check wireless interface
 iwconfig
+
+# Check network interface
+ip link show
+```
+
+## Important: Disabling Bluetooth (Required)
+
+The RTL8851BU chip is a combo WiFi+Bluetooth device. The Linux `btusb` driver may conflict with this WiFi driver. **You must disable Bluetooth functionality** for WiFi to work properly.
+
+### Step 1: Blacklist btusb Module
+Create a blacklist configuration to prevent btusb from loading:
+```bash
+sudo tee /etc/modprobe.d/blacklist-btusb-tplink.conf << 'EOF'
+install btusb /bin/false
+EOF
+```
+
+### Step 2: Remove btusb Module (if loaded)
+```bash
+sudo rmmod btusb 2>/dev/null
+```
+
+### Step 3: Configure USB Modeswitch
+Create USB modeswitch configuration for the device:
+```bash
+sudo tee /etc/usb_modeswitch.d/0bda:1a2b << 'EOF'
+TargetVendor=0x3625
+TargetProduct=0x010b
+StandardEject=1
+EOF
+```
+
+### Step 4: Create Udev Rules
+Create udev rules for automatic device switching and driver loading:
+```bash
+sudo tee /etc/udev/rules.d/99-tplink-tx10ub.rules << 'EOF'
+ACTION=="add", ATTR{idVendor}=="0bda", ATTR{idProduct}=="1a2b", RUN+="/usr/sbin/usb_modeswitch -K -v 0bda -p 1a2b"
+ACTION=="add", ATTR{idVendor}=="3625", ATTR{idProduct}=="010b", RUN+="/sbin/modprobe 8851bu"
+EOF
+```
+
+### Step 5: Enable Module Autoload on Boot
+```bash
+echo "8851bu" | sudo tee /etc/modules-load.d/8851bu.conf
+```
+
+### Step 6: Reload Udev Rules and Reboot
+```bash
+sudo udevadm control --reload-rules
+sudo reboot now
+```
+
+### Verify Configuration
+After reboot, verify all configurations are in place:
+```bash
+# Check module autoload config
+cat /etc/modules-load.d/8851bu.conf
+
+# Check USB modeswitch config
+cat /etc/usb_modeswitch.d/0bda:1a2b
+
+# Check udev rules
+cat /etc/udev/rules.d/99-tplink-tx10ub.rules
+
+# Check btusb blacklist
+cat /etc/modprobe.d/blacklist-btusb-tplink.conf
 ```
 
 ## Uninstall
