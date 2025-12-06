@@ -164,6 +164,8 @@ static struct usb_device_id rtw_usb_id_tbl[] = {
 #ifdef CONFIG_RTL8851B
 	/*=== Realtek demoboard ===*/
 	{USB_DEVICE_AND_INTERFACE_INFO(USB_VENDER_ID_REALTEK, 0xB851, 0xff, 0xff, 0xff), .driver_info = RTL8851B},
+	/*=== Third-party adapters ===*/
+	{USB_DEVICE_AND_INTERFACE_INFO(0x3625, 0x010b, 0xff, 0xff, 0xff), .driver_info = RTL8851B},
 #endif /* CONFIG_RTL8851B */
 
 #ifdef CONFIG_RTL8852C
